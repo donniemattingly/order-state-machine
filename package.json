@@ -1,0 +1,15 @@
+{
+  "name": "order-state-machine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun demo.ts",
+    "dev": "bun --watch demo.ts",
+    "test": "bun test",
+    "typecheck": "bun --bun tsc"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.1",
+    "typescript": "7.0.2"
+  }
+}
