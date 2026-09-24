@@ -1,0 +1,23 @@
+Resilience & recovery
+
+Retry with exponential backoff on the void before escalating to needs_attention.
+Authorization TTL: auto-void and cancel an order left in payment_authorized too long.
+Idempotency keys on the create and transition endpoints.
+Observability
+
+Structured events on every state transition (stdout → Kafka/SNS).
+A needs_attention queue endpoint with time-in-state filtering.
+Persistence
+
+A real database with optimistic locking to prevent concurrent transition races.
+Concurrency
+
+Demonstrate the double-charge race condition and how to prevent it.
+API surface
+
+A manual-resolution endpoint for needs_attention requiring an operator reason.
+Pagination and filtering on order history.
+Extensibility
+
+Multi-item orders with partial fulfillment.
+Refund flow: complete → refund_pending → refunded.

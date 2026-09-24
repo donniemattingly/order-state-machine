@@ -5,6 +5,8 @@
   "scripts": {
     "start": "bun demo.ts",
     "dev": "bun --watch demo.ts",
+    "browser": "bun --watch playground/server.ts",
+    "browser:typecheck": "bun --bun tsc -p playground/tsconfig.json",
     "test": "bun test",
     "typecheck": "bun --bun tsc"
   },

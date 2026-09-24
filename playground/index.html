@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order lab · Choose your path</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #263e39; background: #f5f4ef; color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1280px; margin: auto; padding: 0 38px 32px; }
+    .masthead { display: flex; justify-content: space-between; align-items: center; height: 65px; border-bottom: 1px solid #d6dcd4; font-size: 11px; letter-spacing: .12em; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: .17em; }
+    .brand-mark { width: 21px; height: 21px; border: 5px solid #315c4e; border-radius: 50%; box-shadow: 8px 0 0 -4px #b98551; margin-right: 4px; }
+    .live { display: flex; align-items: center; gap: 7px; color: #537163; letter-spacing: .02em; }
+    .live::before { content: ''; width: 6px; height: 6px; background: #50876b; border-radius: 50%; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0 25px; }
+    .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: #6b7e73; }
+    h1 { margin: 7px 0 9px; font: 400 clamp(30px, 4vw, 43px)/1.1 Georgia, serif; letter-spacing: -.04em; color: #254438; }
+    header p { margin: 0; color: #66776e; font-size: 13px; line-height: 1.5; }
+    button { font: inherit; border: 1px solid #c8d1c5; border-radius: 7px; padding: 10px 16px; background: #fafbf7; color: #324f41; cursor: pointer; min-height: 44px; }
+    button:disabled { cursor: default; opacity: .5; }
+    button:focus-visible, summary:focus-visible { outline: 3px solid #b97932; outline-offset: 4px; }
+    #reset { background: #294f3f; color: #f8fcf3; font-size: 12px; font-weight: 550; flex-shrink: 0; border: none; box-shadow: 0 3px 6px #1f392218; }
+    #reset:hover:not(:disabled) { background: #3b6754; }
+    .panel { background: #fbfcf8; border: 1px solid #d4dcd1; border-radius: 12px; overflow: hidden; }
+    .machine { box-shadow: 0 8px 35px #30452207; }
+    .statebar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 19px 24px 0; }
+    #phase { color: #365a47; font-size: 10px; font-weight: 650; letter-spacing: .12em; }
+    #current { color: #41614f; font: 11px monospace; background: #e9eee3; border: 1px solid #d7e0cf; padding: 6px 10px; border-radius: 5px; }
+    #status { margin: 8px 24px 16px; font-size: 13px; color: #5c7063; line-height: 1.5; min-height: 20px; }
+    #scene { height: 405px; position: relative; overflow: hidden; background-color: #f4f6ef; background-image: radial-gradient(#a6b8a844 .8px, transparent .8px); background-size: 18px 18px; border-top: 1px solid #e0e6da; }
+    #scene canvas { display: block; }
+    .scene-label { position: absolute; transform: translate(-50%, -27px); width: 188px; padding: 58px 5px 9px; border: none; background: transparent; text-align: center; white-space: nowrap; }
+    .scene-label strong { display: block; font-size: 13px; font-weight: 550; color: #758779; }
+    .scene-label span { display: block; font-size: 11px; color: #758779; margin-top: 7px; min-height: 18px; }
+    .scene-label:disabled { opacity: 1; }
+    .scene-label.is-current strong { color: #213f2f; font-weight: 700; }
+    .scene-label.is-current span { color: #496d55; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+    .scene-label.is-visited strong { color: #41644c; }
+    .scene-label.is-choice strong { color: #294f3b; }
+    .scene-label.is-choice span { display: inline-block; border: 1px solid #315a44; border-radius: 5px; background: #315a44; padding: 7px 11px; color: #fff; box-shadow: 0 3px 8px #315a4420; transition: background .15s, box-shadow .15s; }
+    .scene-label.is-choice:hover span { background: #47765b; box-shadow: 0 4px 12px #315a4438; }
+    .scene-label[data-state="rejected"].is-choice span, .scene-label[data-state="needs_attention"].is-choice span { background: #92563d; border-color: #92563d; }
+    .scene-label[data-state="cancelled"].is-choice span { background: #896b31; border-color: #896b31; }
+    .failure-choice { position: absolute; transform: translate(-50%, -50%); border: 1px solid #c1a58a; color: #805839; background: #fbf4e9; font-size: 11px; padding: 8px 12px; min-height: 36px; box-shadow: 0 2px 6px #5742250c; }
+    .failure-choice:hover { background: #f3e4cc; }
+    .scene-footer { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 24px; color: #6c7e70; font-size: 11px; border-top: 1px solid #dce3d6; }
+    .legend { display: flex; gap: 18px; align-items: center; }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend i { width: 7px; height: 7px; border-radius: 50%; background: #3d7053; }
+    .legend .recovery { background: #b68b49; } .legend .failure { background: #ac684b; }
+    #home-view { background: transparent; border: none; min-height: 24px; font-size: 11px; padding: 0; color: #647a68; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 26px; }
+    .log { padding: 0 0 8px; background: transparent; border: none; border-radius: 0; }
+    h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .10em; margin: 0 0 12px; font-weight: 650; color: #5b7061; display: flex; gap: 10px; }
+    h2 .section-number { color: #98a68f; font-weight: 400; }
+    ol { padding: 0; margin: 0; list-style: none; }
+    li { border-top: 1px solid #dce2d6; padding: 9px 0; font-size: 12px; line-height: 1.5; color: #496351; }
+    li span { display: block; color: #7b8c7d; font-size: 11px; margin-top: 2px; }
+    #calls:empty::after { content: 'Waiting for your first move.'; color: #899784; font-size: 12px; display: block; border-top: 1px solid #dce2d6; padding-top: 12px; }
+    details { margin-top: 8px; padding: 12px 16px; border-radius: 6px !important; background: transparent !important; }
+    summary { cursor: pointer; font-size: 11px; color: #647a68; }
+    pre { font-size: 11px; line-height: 1.6; overflow: auto; max-height: 280px; }
+    #order-id { font: 10px monospace; color: #83917e; overflow-wrap: anywhere; }
+    .note { color: #7c8c79; font-size: 11px; line-height: 1.5; margin: 22px 0 5px; }
+    #fallback-actions { padding: 24px; } #fallback-actions button { margin: 8px; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    @media (max-width: 650px) {
+      main { padding: 0 16px 20px; } .masthead { height: 52px; } header { padding: 22px 0; align-items: center; } h1 { font-size: 28px; } header p { font-size: 12px; }
+      .eyebrow { display: none; } .columns { grid-template-columns: 1fr; gap: 16px; } .statebar { padding: 16px 16px 0; } #phase { font-size: 9px; } #current { font-size: 9px; }
+      #status { margin: 10px 16px; min-height: 36px; } #scene { height: 340px; } .scene-label { width: 112px; padding-top: 42px; }
+      .scene-label strong { font-size: 10px; } .scene-label span { font-size: 10px; } .scene-label.is-choice span { padding: 6px 4px; }
+      .failure-choice { font-size: 10px; padding: 6px; } .scene-footer { padding: 10px 16px; } .legend { gap: 12px; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>ORDER LAB</div><span class="live">Local simulation</span></div>
+  <header>
+    <div><div class="eyebrow">An interactive field guide</div><h1>Anatomy of an order.</h1><p>One order. Every possibility. Choose the next step on the map.</p></div>
+    <button id="reset">↺ New order</button>
+  </header>
+  <section class="panel machine" aria-label="Order state">
+    <div class="statebar"><strong id="phase"></strong><span id="current"></span></div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <div id="scene" aria-label="Interactive state graph"></div>
+    <div id="fallback-actions" hidden></div>
+    <div class="scene-footer"><div class="legend"><span><i></i>Progress</span><span><i class="recovery"></i>Recovery</span><span><i class="failure"></i>Failure</span></div><button id="home-view">Center graph</button></div>
+  </section>
+  <div class="columns">
+    <section class="panel log"><h2><span class="section-number">01</span> Order journey</h2><ol id="history"></ol></section>
+    <section class="panel log"><h2><span class="section-number">02</span> Activity</h2><ol id="calls"></ol></section>
+  </div>
+  <details class="panel"><summary>Inspect operation result</summary><pre id="result"></pre></details>
+  <details class="panel"><summary>Inspect order snapshot</summary><pre id="snapshot"></pre></details>
+  <p class="note">These choices control simulated service responses. Your original state machine decides every transition.</p>
+  <div id="order-id"></div>
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

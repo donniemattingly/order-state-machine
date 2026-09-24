@@ -13,6 +13,23 @@ bun run typecheck  # Check TypeScript
 
 Payment and fulfillment are stubbed; no external services or credentials are required.
 
+Order creation and every state transition emit one JSON line to stdout. Events include a per-order sequence, safe reason code, and optional correlation ID; raw payment and fulfillment errors are not logged. Pass a context with `correlationId` to `create`, `authorizePayment`, or `complete` to tag that operation's event. Pass an `eventSink` as the second argument to `createOrderService` to route events elsewhere.
+
+## Browser playground
+
+First run `cd playground && bun install --frozen-lockfile && cd ..`.
+Run `bun run browser`, then open http://127.0.0.1:3000. Click highlighted
+choices directly on the graph: authorize or decline payment, then fulfill the
+order or fail fulfillment. If fulfillment fails, the payment void waits for you
+to choose success or failure. Use **New order** to explore a different path.
+
+The playground imports the same `index.ts` implementation as the tests; its
+buttons control simulated service responses, never domain state. Three.js and
+its lockfile live only in `playground/`. Bun bundles everything locally, so the
+installed playground needs no CDN. Refresh after editing.
+`PORT=3001 bun run browser` selects another port if needed. The command-line
+demo remains available with `bun start`.
+
 ## What I built and why
 
 With TypeScript, I always try to make the types good enough that the implementation is almost trivial. A state machine is an obvious fit for this model. This is spiritually similar to something like Redux/useReducer in React.
@@ -34,3 +51,44 @@ Honestly, what I have may not be worth the cognitive overhead compared to a few 
 ## With more time
 
 More tests. This kind of stuff begs for mutation testing or other more black-box approaches. Ultimately, the state machine is accurate only if cast in relief of a well-specified test suite. This is also a toy version of the problem. The complexity of this problem is mostly how it scales to a full system. The real version of this problem involves queues and step functions and many other distributed systems primitives. If this is truly just something that can be handled in a single JavaScript file, then basically any approach is defensible.
+
+## Per-item fulfillment
+
+Pass individually fulfillable items when creating an order. Item IDs must be unique
+within the order; multiple items may reference the same product.
+
+```ts
+const order = orders.create({
+  items: [
+    { id: "book-1", productId: "book" },
+    { id: "book-2", productId: "book" },
+  ],
+});
+await order.authorizePayment();
+await order.completeItem("book-1");
+console.log(order.get().fulfillment);
+// { state: "partial", total: 2, fulfilled: 1, failed: 0, settled: false }
+await order.complete(); // Attempts all remaining pending items, in order.
+```
+
+`Fulfillment.complete(orderId, item)` receives the item identity. Snapshots carry
+`items`, each with a `pending`, `fulfilling`, `fulfilled`, or `failed` fulfillment
+state. Failed items retain their cause. The derived `fulfillment` summary reports
+progress separately from whether all items have finished. `summarizeFulfillment`
+can also summarize items combined from multiple order snapshots. An empty input
+is unfulfilled and unsettled. Snapshot containers are copied; opaque error causes
+retain their original references, as they do for order-level failures.
+
+The order stays `payment_authorized` while items remain pending. All successful
+items produce `complete`. All failed items trigger the existing payment void and
+cancellation flow. Mixed final outcomes produce `needs_attention` with reason
+`partial_fulfillment`; the shared payment is **not voided**, and payment
+reconciliation requires manual handling. Failed items cannot be retried through
+`completeItem`; retry and refund flows are not implemented. Overlapping operations
+on the same order are rejected.
+
+Calling `create()` without items preserves the single-item example using one
+default item. Existing transition context arguments remain supported;
+`completeItem(itemId, context)` also accepts a correlation context. Order history
+and transition events continue to describe order-level transitions; current
+per-item progress is available in the snapshot.
